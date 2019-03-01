@@ -38,3 +38,63 @@ Using `n` as weighting variable
       n
   <int>
 1  45
+```
+
+Single parents, "regular" parents and the respective Kids are somewhat different:
+
+```
+alterunter <- c(0:18)
+soz_sum <- soz %>%
+  group_by(`Familiennummer:`) %>%
+  filter (!is.na(`Familiennummer:`)) %>%
+  mutate(
+    
+    
+    erwachsene = ifelse(
+      fam_n < 2,
+      "Einzelperson",
+      "Person in Familie"),
+    
+    kind_in_familie = ifelse(
+      TRUE %in% (alterunter %in% alter),
+      "kind im familienverbund",
+      "-"),
+    
+    erwachsene = ifelse(
+      fam_n > 1 &
+        alter > 18 &
+        alter >= max(alter) - 25 &
+        kind_in_familie == "kind im familienverbund",
+      "Zweitälteste Person im Familienverbund mit Kind",
+      erwachsene),
+    erwachsene = ifelse(
+      fam_n > 1 &
+        alter > 18 &
+        alter >= max(alter) &
+        kind_in_familie == "kind im familienverbund",
+      "Älteste Person im Familienverbund mit Kind",
+      erwachsene),
+    erwachsene = ifelse(
+      fam_n > 1 &
+        alter > 18 &
+        alter >= max(alter) &
+        kind_in_familie == "kind im familienverbund" &
+        erwachsene == "Älteste Person im Familienverbund mit Kind" & 
+        !(any(erwachsene == "Zweitälteste Person im Familienverbund mit Kind" )) ,
+      "Alleinerziehend",
+      erwachsene),
+    
+    erwachsene = ifelse(
+      fam_n > 1 &
+        alter <= 18 ,
+      "Kind unter 18 in Familie",
+      erwachsene),
+    erwachsene = ifelse(
+      fam_n < 2 &
+        alter <= 18 ,
+      "Kind unter 18 - allein",
+      erwachsene)
+    
+  ) 
+
+```
