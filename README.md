@@ -1,5 +1,5 @@
 ## singleparents
-two approaches to a data wrangling problem in R
+approach to a data wrangling problem in R
 
 # The Problem and approach (i.e.: What is it good for?)
 
@@ -7,7 +7,7 @@ When handling any dataframe on the individual level that includes families of pe
 ```
 Observations: 100
 Variables: 3
-$ `Familiennummer:` <chr> "475124", "574675", "558110", "439440", "439440", "465883", "528440", "571875", "571921", "571875",...
+$ `ID:` <chr> "475124", "574675", "558110", "439440", "439440", "465883", "528440", "571875", "571921", "571875",...
 $ `Geb.-Datum:`     <dttm> 1996-12-31, 1996-12-21, 1989-10-14, 1970-04-20, 1970-01-01, 1985-08-13, 1996-12-31, 1988-04-20, 19...
 $ `Geschlecht:`     <chr> "männlich", "männlich", "männlich", "männlich", "weiblich", "männlich", "männlich", "männlich", "mä...
 ```
@@ -17,11 +17,24 @@ What I want is to get to the individuals role in their respective family. So I a
  - Second oldest Person in a family is PROBABLY the mother in most cases.
  - Kids under 18.
  
-Since I was interested more in figuring out single parents, it was necessary to include an arbitrary defined age-range between the oldest person and the second oldest to minimize the amount of cases where a single parent would have kids over 18 (which would be classified as second oldest) and kids under 18
- 
+Since I was interested more in figuring out single parents, it was necessary to include an arbitrary defined age-range between the oldest person and the second oldest to minimize the amount of cases where a single parent would have kids over 18 (which would be classified as second oldest) and kids under 18. I set this number to 25 as I wanted to minimize the scenario of single parent + kid under 18 + kid over 18. A single parent, in this case, would be defined as any oldest person without any person in a range of 25 years age difference.
+
+ Some prerequisites need to be done, calculating a numeric age and calculating the occurences of `ID`:
 
 ```
+df$age <- as.period(interval(df$`Geb.-Datum:`, Sys.Date()),
+                    unit = "year")
 
+df <- left_join(df, count(df, `ID:`))
+df$family_count <- df$n
+```
 
+With this, it becomes arbitrary to filter single persons:
+```
+df %>% filter(fam_n < 2) %>% tally() %>% summarise(n = sum(n))
 
-Thus, it is arbitrary to filter single persons:
+Using `n` as weighting variable
+# A tibble: 1 x 1
+      n
+  <int>
+1  45
